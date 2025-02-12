@@ -20,7 +20,9 @@ def get_chatbot_response(user_input):
         return f"⚠️ Error: {e}"
 
 # Load Local image
-logo = Image.open("VITA_logo.png")
+import os
+logo_path = os.path.join(os.path.dirname(__file__), "VITA_logo.png")
+logo = Image.open(logo_path)
 
 # Config Streamlit page with local logo
 st.set_page_config(
