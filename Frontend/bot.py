@@ -4,20 +4,24 @@ import requests
 import os
 import time
 
-# Load Local image
+# Load Local image safely
 logo_path = "VITA_logo.png"
-with open(logo_path, "rb") as img_file:
-    logo_base64 = base64.b64encode(img_file.read()).decode()
+
+if os.path.exists(logo_path):
+    with open(logo_path, "rb") as img_file:
+        logo_base64 = base64.b64encode(img_file.read()).decode()
+else:
+    st.error("⚠️ Logo file 'VITA_logo.png' not found. Please ensure it is in the correct directory.")
+    logo_base64 = None  # Prevent errors if file is missing
 
 # Configure Streamlit page
 st.set_page_config(
     page_title="SM VITA",
-    page_icon=logo_path,
+    page_icon=logo_path if logo_base64 else None,  # Use logo if available
     layout="wide"
 )
 
 API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
-
 CHAT_COUNT_FILE = "chat_count.txt"
 
 # Function to load chat count and last reset time
@@ -38,7 +42,7 @@ def load_chat_count():
 
     return count, last_reset
 
-# Function to save chat count and last reset time
+# Function to save chat count
 def save_chat_count(count, last_reset):
     with open(CHAT_COUNT_FILE, "w") as file:
         file.write(f"{count} {last_reset}")
@@ -75,21 +79,24 @@ if "chat_sessions" not in st.session_state:
 if "current_session" not in st.session_state:
     st.session_state.current_session = 0
 if "show_suggestions" not in st.session_state:
-    st.session_state.show_suggestions = True  # Only show suggestions at start
+    st.session_state.show_suggestions = True  # Show suggestions at start
 
 # Get the selected chat session
 chat_session = st.session_state.chat_sessions[st.session_state.current_session]
 
-# Display chat history
-st.markdown(
-    f"""
-    <div style="display: flex; align-items: center; text-align: center;">
-        <img src="data:image/png;base64,{logo_base64}" width="150">
-        <h2 style="margin: 0; font-size: 50px; font-weight: bold;">SMVITA Bot</h2>
-    </div>
-    <p style="text-align: left; font-size: 20px;">Hello, I am <b>SMVITA Bot</b> 😎 and I will try my best to resolve all your VITA-related queries.</p>
-    """, unsafe_allow_html=True
-)
+# Display chat history and logo if available
+if logo_base64:
+    st.markdown(
+        f"""
+        <div style="display: flex; align-items: center; text-align: center;">
+            <img src="data:image/png;base64,{logo_base64}" width="150">
+            <h2 style="margin: 0; font-size: 50px; font-weight: bold;">SMVITA Bot</h2>
+        </div>
+        <p style="text-align: left; font-size: 20px;">Hello, I am <b>SMVITA Bot</b> 😎 and I will try my best to resolve all your VITA-related queries.</p>
+        """, unsafe_allow_html=True
+    )
+else:
+    st.markdown("## SMVITA Bot 🤖\nHello, I am here to assist with your queries.")
 
 for message in chat_session:
     with st.chat_message(message["role"]):
