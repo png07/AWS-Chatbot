@@ -3,6 +3,7 @@ import streamlit as st
 import requests
 import os
 import time
+streamlit-cookie-manager
 
 Imports required libraries:
 streamlit → Creates the web-based chatbot UI.
