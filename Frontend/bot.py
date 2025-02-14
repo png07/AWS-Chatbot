@@ -12,12 +12,15 @@ st.set_page_config(
 
 API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
 
-# Authentication
-USERNAME = "admin"
-PASSWORD = "password123"
+# Authentication - Three Users
+USERS = {
+    "admin": "password123",
+    "user1": "password1",
+    "user2": "password2"
+}
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+if "authenticated_user" not in st.session_state:
+    st.session_state.authenticated_user = None
 if "logout_clicked" not in st.session_state:
     st.session_state.logout_clicked = False
 
@@ -26,19 +29,19 @@ def login():
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
-        if username == USERNAME and password == PASSWORD:
-            st.session_state.authenticated = True
+        if username in USERS and USERS[username] == password:
+            st.session_state.authenticated_user = username
             st.session_state.logout_clicked = False
             st.rerun()
         else:
             st.error("Invalid username or password")
 
 def logout():
-    st.session_state.authenticated = False
+    st.session_state.authenticated_user = None
     st.session_state.logout_clicked = False
     st.rerun()
 
-if not st.session_state.authenticated:
+if not st.session_state.authenticated_user:
     login()
     st.stop()
 
@@ -64,19 +67,19 @@ if os.path.exists(logo_path):
     with open(logo_path, "rb") as img_file:
         logo_base64 = base64.b64encode(img_file.read()).decode()
 else:
-    st.warning("\u26A0\uFE0F Warning: Logo file `VITA_logo.png` not found! Upload it in the same directory.")
+    st.warning("⚠️ Warning: Logo file `VITA_logo.png` not found! Upload it in the same directory.")
     logo_base64 = ""
 
-# Initialize session state for chat history
+# Initialize session state for chat history per user
 if "chat_sessions" not in st.session_state:
-    st.session_state.chat_sessions = [[]]
-if "current_session" not in st.session_state:
-    st.session_state.current_session = 0
+    st.session_state.chat_sessions = {}
+if st.session_state.authenticated_user not in st.session_state.chat_sessions:
+    st.session_state.chat_sessions[st.session_state.authenticated_user] = [[]]
 if "show_suggestions" not in st.session_state:
     st.session_state.show_suggestions = True  # Only show suggestions at start
 
 # Get the selected chat session
-chat_session = st.session_state.chat_sessions[st.session_state.current_session]
+chat_session = st.session_state.chat_sessions[st.session_state.authenticated_user][0]
 
 # Display chat history
 st.markdown(
@@ -85,7 +88,7 @@ st.markdown(
         <img src="data:image/png;base64,{logo_base64}" width="150">
         <h2 style="margin: 0; font-size: 50px; font-weight: bold;">SMVITA Bot</h2>
     </div>
-    <p style="text-align: left; font-size: 20px;">Hello, I am <b>SMVITA Bot</b> \U0001F60E and I will try my best to resolve all your VITA-related queries.</p>
+    <p style="text-align: left; font-size: 20px;">Hello, I am <b>SMVITA Bot</b> 😎 and I will try my best to resolve all your VITA-related queries.</p>
     """, unsafe_allow_html=True
 )
 
@@ -117,7 +120,7 @@ if st.session_state.show_suggestions and not chat_session:
                 st.rerun()
 
 # Chat input field
-user_query = st.chat_input("\U0001F4AC Ask me about VITA courses, admission, and more...")
+user_query = st.chat_input("💬 Ask me about VITA courses, admission, and more...")
 if user_query:
     st.session_state.show_suggestions = False
     chat_session.append({"role": "user", "content": user_query})
