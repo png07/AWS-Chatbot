@@ -5,6 +5,7 @@ import time
 import os
 
 API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
+
 CHAT_COUNT_FILE = "chat_count.txt"
 
 # Function to load chat count and last reset time
@@ -19,8 +20,8 @@ def load_chat_count():
         else:
             count, last_reset = 0, time.time()  # Fallback case
 
-    # Reset after 24 hours (86400 seconds)
-    if time.time() - last_reset > 60:  # Changed from 30 to 86400 seconds
+    # Reset after 1 hour (3600 seconds)
+    if time.time() - last_reset > 3600:  
         return 0, time.time()  # Reset chat count
 
     return count, last_reset
@@ -35,9 +36,9 @@ chat_count, last_reset_time = load_chat_count()
 
 # Function to get chatbot response
 def get_chatbot_response(user_input):
-    global chat_count, last_reset_time  # Ensure correct scope handling
+    global chat_count, last_reset_time  
 
-    if chat_count >= 2:  # Limit is 10 queries per day
+    if chat_count >= 10:  # Limit is 10 queries per day
         return "⚠️ You have reached the limit of 10 queries. Please wait before asking more."
 
     try:
@@ -65,7 +66,7 @@ else:
     st.warning("⚠️ Warning: Logo file `VITA_logo.png` not found! Upload it in the same directory.")
     logo_base64 = ""
 
-# Config Streamlit page with fallback for missing logo
+# Config Streamlit page 
 st.set_page_config(
     page_title="SM VITA",
     page_icon="🏢",
@@ -122,7 +123,7 @@ if st.session_state.show_suggestions and not chat_session:
                 st.rerun()
 
 # Check if the limit is reached
-if chat_count >= 2:
+if chat_count >= 10:
     st.warning("🚨 Chat limit reached (10 queries). Please try again later.")
 else:
     # User input
