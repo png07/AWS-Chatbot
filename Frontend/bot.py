@@ -9,19 +9,17 @@ from datetime import datetime, timedelta
 # API Gateway URL
 API_GATEWAY_URL = "API_Endpoint"
 
-# Helper function to get user's unique ID (stored in cookies)
+# Helper function to get user's unique ID (stored in session state)
 def get_user_id():
-    if "user_id" in st.session_state:
-        return st.session_state.user_id
+    if "user_id" not in st.session_state:
+        # Generate a unique ID using the current timestamp and a random value
+        user_fingerprint = str(time.time()) + os.urandom(16).hex()
+        hashed_id = hashlib.sha256(user_fingerprint.encode()).hexdigest()
 
-    # Generate a unique ID based on browser fingerprint and store in cookies
-    user_fingerprint = st.experimental_user["browser"]["user_agent"] + str(time.time())
-    hashed_id = hashlib.sha256(user_fingerprint.encode()).hexdigest()
-
-    # Store user_id in session and a persistent cookie
-    st.session_state.user_id = hashed_id
-    st.experimental_set_query_params(user_id=hashed_id)  # Store in URL to persist
-    return hashed_id
+        # Store user_id in session state
+        st.session_state.user_id = hashed_id
+    
+    return st.session_state.user_id
 
 # Function to get current chat count from cookies
 def load_chat_count():
