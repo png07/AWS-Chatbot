@@ -68,7 +68,7 @@ else:
 # Config Streamlit page with fallback for missing logo
 st.set_page_config(
     page_title="SM VITA",
-    page_icon="🤖",
+    page_icon="🏢",
     layout="wide"
 )
 
