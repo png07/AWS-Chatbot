@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timedelta
 
 # API Gateway URL
-API_GATEWAY_URL = API_Endpoint
+API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
 
 # Helper function to get user's unique ID (stored in session state)
 def get_user_id():
