@@ -12,36 +12,45 @@ st.set_page_config(
 
 API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
 
-# Authentication - Three Users
+# Authentication - Allow 3 users
 USERS = {
     "admin": "password123",
-    "user1": "password1",
-    "user2": "password2"
+    "user1": "user1pass",
+    "user2": "user2pass",
+    "user3": "user3pass"
 }
 
-if "authenticated_user" not in st.session_state:
-    st.session_state.authenticated_user = None
+if "username" not in st.session_state:
+    st.session_state.username = None
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 if "logout_clicked" not in st.session_state:
     st.session_state.logout_clicked = False
 
+# Login function
 def login():
     st.title("SM VITA Chatbot Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
         if username in USERS and USERS[username] == password:
-            st.session_state.authenticated_user = username
+            st.session_state.authenticated = True
+            st.session_state.username = username
             st.session_state.logout_clicked = False
+            if username not in st.session_state:
+                st.session_state[username] = {"chat_sessions": [[]], "current_session": 0, "show_suggestions": True}
             st.rerun()
         else:
             st.error("Invalid username or password")
 
+# Logout function
 def logout():
-    st.session_state.authenticated_user = None
+    st.session_state.authenticated = False
+    st.session_state.username = None
     st.session_state.logout_clicked = False
     st.rerun()
 
-if not st.session_state.authenticated_user:
+if not st.session_state.authenticated:
     login()
     st.stop()
 
@@ -70,18 +79,11 @@ else:
     st.warning("⚠️ Warning: Logo file `VITA_logo.png` not found! Upload it in the same directory.")
     logo_base64 = ""
 
-# Initialize session state for chat history per user
-if "chat_sessions" not in st.session_state:
-    st.session_state.chat_sessions = {}
-if st.session_state.authenticated_user not in st.session_state.chat_sessions:
-    st.session_state.chat_sessions[st.session_state.authenticated_user] = [[]]
-if "show_suggestions" not in st.session_state:
-    st.session_state.show_suggestions = True  # Only show suggestions at start
+# User-specific session state
+user_session = st.session_state[st.session_state.username]
+chat_session = user_session["chat_sessions"][user_session["current_session"]]
 
-# Get the selected chat session
-chat_session = st.session_state.chat_sessions[st.session_state.authenticated_user][0]
-
-# Display chat history
+# Display chatbot header
 st.markdown(
     f"""
     <div style="display: flex; align-items: center; text-align: center;">
@@ -92,37 +94,34 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
+# Display chat history
 for message in chat_session:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Suggested Questions (Only show at the start)
-if st.session_state.show_suggestions and not chat_session:
+if user_session["show_suggestions"] and not chat_session:
     st.markdown("#### 🔥 Suggested Questions:")
-
     suggested_questions = [
         "📚 What are the courses offered by SMVITA?",
         "📖 What are the exam dates for C-Cat?",
-        "📅 What is the fees for Pre-Cat in SMVITA?",
+        "📅 What is the fee for Pre-Cat in SMVITA?",
         "🎓 What are the eligibility criteria for doing CDAC?",
         "📍 Where is SMVITA located?",
         "📝 How can I register for C-CAT?"
     ]
-    
-    num_columns = min(len(suggested_questions), 3)  # Adjust number of columns as needed
-    cols = st.columns(num_columns)  # Create dynamic columns
-
+    cols = st.columns(3)  # Three columns for buttons
     for idx, question in enumerate(suggested_questions):
-        with cols[idx % num_columns]:  # Distribute buttons evenly across columns
+        with cols[idx % 3]:
             if st.button(question, key=f"q{idx}"):
+                user_session["show_suggestions"] = False  # Hide after first click
                 st.session_state["user_input"] = question
-                st.session_state.show_suggestions = False  # Hide suggestions after first interaction
                 st.rerun()
 
 # Chat input field
 user_query = st.chat_input("💬 Ask me about VITA courses, admission, and more...")
 if user_query:
-    st.session_state.show_suggestions = False
+    user_session["show_suggestions"] = False
     chat_session.append({"role": "user", "content": user_query})
     response = get_chatbot_response(user_query)
     chat_session.append({"role": "assistant", "content": response})
