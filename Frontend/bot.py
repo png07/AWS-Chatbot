@@ -109,13 +109,12 @@ if st.session_state.show_suggestions and not chat_session:
     num_columns = min(len(suggested_questions), 3)  # Adjust number of columns as needed
     cols = st.columns(num_columns)  # Create dynamic columns
 
-    for question in suggested_questions:
-        if st.button(question):
-            st.session_state.show_suggestions = False  # Hide suggestions after first interaction
-            st.session_state.chat_sessions[st.session_state.current_session].append({"role": "user", "content": question})
-            response = get_chatbot_response(question)
-            st.session_state.chat_sessions[st.session_state.current_session].append({"role": "assistant", "content": response})
-            st.rerun()
+    for idx, question in enumerate(suggested_questions):
+        with cols[idx % num_columns]:  # Distribute buttons evenly across columns
+            if st.button(question, key=f"q{idx}"):
+                st.session_state["user_input"] = question
+                st.session_state.show_suggestions = False  # Hide suggestions after first interaction
+                st.rerun()
 
 # Chat input field
 user_query = st.chat_input("\U0001F4AC Ask me about VITA courses, admission, and more...")
