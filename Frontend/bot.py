@@ -90,7 +90,7 @@ if st.session_state.show_suggestions and not chat_session:
                 st.rerun()
 
 # Check if the limit is reached for the current user
-if st.session_state.user_chat_count >= 10:
+if st.session_state.user_chat_count >= 2:
     st.warning("🚨 Chat limit reached (10 queries). Please try again after 24 hours.")
 else:
     # User input
@@ -114,7 +114,7 @@ else:
         st.session_state.user_chat_count += 1
 
         # Reset chat count after 24 hours
-        if time.time() - st.session_state.last_reset_time > 86400:  # 24 hours in seconds
+        if time.time() - st.session_state.last_reset_time > 60:  # 24 hours in seconds
             st.session_state.user_chat_count = 0
             st.session_state.last_reset_time = time.time()
 
