@@ -15,24 +15,20 @@ def get_user_id():
         # Generate a unique ID using the current timestamp and a random value
         user_fingerprint = str(time.time()) + os.urandom(16).hex()
         hashed_id = hashlib.sha256(user_fingerprint.encode()).hexdigest()
-
         # Store user_id in session state
         st.session_state.user_id = hashed_id
-    
     return st.session_state.user_id
 
-# Function to get current chat count from cookies
+# Function to get current chat count from query parameters
 def load_chat_count():
     user_id = get_user_id()
     current_time = time.time()
     
-    # Retrieve stored chat data
-    if f"chat_count_{user_id}" in st.session_state:
-        chat_data = st.session_state[f"chat_count_{user_id}"]
-    else:
-        chat_data = st.experimental_get_query_params().get("chat_data", [{}])[0]
+    # Retrieve stored chat data from query parameters
+    chat_data = st.query_params.get("chat_data", [{}])
+    if isinstance(chat_data, list) and chat_data:
+        chat_data = chat_data[0]
 
-    # Convert to dictionary if it exists
     if isinstance(chat_data, str):
         chat_data = eval(chat_data)  # Convert string to dictionary
 
@@ -43,7 +39,7 @@ def load_chat_count():
 
     # Store chat count persistently
     st.session_state[f"chat_count_{user_id}"] = chat_data
-    st.experimental_set_query_params(chat_data=str(chat_data))  # Store in URL
+    st.query_params.update(chat_data=str(chat_data))  # Store in URL
     return chat_data
 
 # Function to update and save chat count
@@ -54,7 +50,7 @@ def save_chat_count():
 
     # Save updated data
     st.session_state[f"chat_count_{user_id}"] = chat_data
-    st.experimental_set_query_params(chat_data=str(chat_data))  # Persist in URL
+    st.query_params.update(chat_data=str(chat_data))  # Persist in URL
 
 # Load user chat count
 user_data = load_chat_count()
@@ -63,18 +59,14 @@ chat_count = user_data["count"]
 # Function to get chatbot response
 def get_chatbot_response(user_input):
     global chat_count  
-
     if chat_count >= 10:  # Enforce limit of 10 queries per user
         return "⚠ You have reached the limit of 10 queries. Please wait before asking more."
-
     try:
         response = requests.post(API_GATEWAY_URL, json={"query": user_input})
         if response.status_code == 200:
             chatbot_response = response.json().get("response", "Error: No response from API")
             if 'claude' in chatbot_response.lower():
                 chatbot_response = 'I am SM-VITA chatbot, a virtual assistant designed to provide information about SM VITA, CDAC programs, courses, admissions, and campus-related queries.'
-
-            # Update chat count
             save_chat_count()
             return chatbot_response
         else:
@@ -83,7 +75,7 @@ def get_chatbot_response(user_input):
         return f"⚠ Error: {e}"
 
 # Load Local image with error handling
-logo_path = os.path.join(os.path.dirname(_file_), "VITA_logo.png")
+logo_path = os.path.join(os.path.dirname(__file__), "VITA_logo.png")
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as img_file:
         logo_base64 = base64.b64encode(img_file.read()).decode()
@@ -104,7 +96,7 @@ if "chat_sessions" not in st.session_state:
 if "current_session" not in st.session_state:
     st.session_state.current_session = 0
 if "show_suggestions" not in st.session_state:
-    st.session_state.show_suggestions = True  # Show only at start
+    st.session_state.show_suggestions = True
 
 # Get the selected chat session
 chat_session = st.session_state.chat_sessions[st.session_state.current_session]
@@ -127,7 +119,6 @@ for message in chat_session:
 # Suggested Questions (Only show at the start)
 if st.session_state.show_suggestions and not chat_session:
     st.markdown("#### 🔥 Suggested Questions:")
-
     suggested_questions = [
         "📚 What are the courses offered by SMVITA?",
         "📚 What are the exam dates for C-Cat?",
@@ -136,39 +127,27 @@ if st.session_state.show_suggestions and not chat_session:
         "📍 Where is SMVITA located?",
         "📝 How can I register for C-CAT?"
     ]
-
-    num_columns = min(len(suggested_questions), 3)  # Adjust number of columns as needed
-    cols = st.columns(num_columns)  # Create dynamic columns
-
+    num_columns = min(len(suggested_questions), 3)
+    cols = st.columns(num_columns)
     for idx, question in enumerate(suggested_questions):
-        with cols[idx % num_columns]:  # Distribute buttons evenly across columns
+        with cols[idx % num_columns]:
             if st.button(question, key=f"q{idx}"):
                 st.session_state["user_input"] = question
-                st.session_state.show_suggestions = False  # Hide after interaction
+                st.session_state.show_suggestions = False
                 st.rerun()
 
-# Check if the limit is reached
 if chat_count >= 10:
     st.warning("🚨 Chat limit reached (10 queries). Please try again later.")
 else:
-    # User input
     user_query = st.chat_input("💬 Ask me about VITA courses, admission, and more...")
     if "user_input" in st.session_state:
         user_query = st.session_state["user_input"]
         del st.session_state["user_input"]
-
     if user_query:
-        # Hide suggestions after first user query
         st.session_state.show_suggestions = False
-
-        # Store user query
         chat_session.append({"role": "user", "content": user_query})
-
-        # Get chatbot response
         response = get_chatbot_response(user_query)
         chat_session.append({"role": "assistant", "content": response})
-
-        # Display messages
         with st.chat_message("user"):
             st.markdown(user_query)
         with st.chat_message("assistant"):
