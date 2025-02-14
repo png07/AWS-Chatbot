@@ -34,7 +34,7 @@ def load_chat_count():
 
     # Check if reset is needed
     last_reset = chat_data.get("last_reset", 0)
-    if current_time - last_reset > 3600:  # 1 hour limit
+    if current_time - last_reset > 60:  # 1 hour limit
         chat_data = {"count": 0, "last_reset": current_time}
 
     # Store chat count persistently
@@ -59,7 +59,7 @@ chat_count = user_data["count"]
 # Function to get chatbot response
 def get_chatbot_response(user_input):
     global chat_count  
-    if chat_count >= 10:  # Enforce limit of 10 queries per user
+    if chat_count >= 2:  # Enforce limit of 10 queries per user
         return "⚠ You have reached the limit of 10 queries. Please wait before asking more."
     try:
         response = requests.post(API_GATEWAY_URL, json={"query": user_input})
