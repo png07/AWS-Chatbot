@@ -54,9 +54,9 @@ def get_chatbot_response(user_input):
                 chatbot_response = 'I am SM-VITA chatbot, a virtual assistant designed to provide information about SM VITA, CDAC programs, courses, admissions, and campus-related queries.'
             return chatbot_response
         else:
-            return "\u26A0\uFE0F Error: Unable to reach chatbot API"
+            return "⚠️ Error: Unable to reach chatbot API"
     except Exception as e:
-        return f"\u26A0\uFE0F Error: {e}"
+        return f"⚠️ Error: {e}"
 
 # Load Local image with error handling
 logo_path = os.path.join(os.path.dirname(__file__), "VITA_logo.png")
@@ -105,6 +105,9 @@ if st.session_state.show_suggestions and not chat_session:
         "📍 Where is SMVITA located?",
         "📝 How can I register for C-CAT?"
     ]
+    
+    num_columns = min(len(suggested_questions), 3)  # Adjust number of columns as needed
+    cols = st.columns(num_columns)  # Create dynamic columns
 
     for question in suggested_questions:
         if st.button(question):
