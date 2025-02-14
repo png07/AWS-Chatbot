@@ -63,7 +63,7 @@ def load_chat_count():
             count, last_reset = 0, time.time()  # Fallback case
 
     # Reset after 1 hour (3600 seconds)
-    if time.time() - last_reset > 3600:
+    if time.time() - last_reset > 60:
         return 0, time.time()  # Reset chat count
 
     return count, last_reset
@@ -80,7 +80,7 @@ chat_count, last_reset_time = load_chat_count()
 def get_chatbot_response(user_input):
     global chat_count, last_reset_time
 
-    if chat_count >= 10:  # Limit is 10 queries per day
+    if chat_count >= 2:  # Limit is 10 queries per day
         return "⚠️ You have reached the limit of 10 queries. Please wait before asking more."
 
     try:
@@ -158,7 +158,7 @@ if st.session_state.show_suggestions and not chat_session:
                 st.rerun()
 
 # Check if the limit is reached
-if chat_count >= 10:
+if chat_count >= 2:
     st.warning("🚨 Chat limit reached (10 queries). Please try again later.")
 else:
     user_query = st.chat_input("💬 Ask me about VITA courses, admission, and more...")
