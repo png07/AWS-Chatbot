@@ -1,7 +1,7 @@
 import base64
 import streamlit as st
 import requests
-from PIL import Image
+import time
 import os
 
 API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
