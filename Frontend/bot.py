@@ -2,44 +2,72 @@ import base64
 import streamlit as st
 import requests
 import time
+import hashlib
 import os
+from datetime import datetime, timedelta
 
-API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
+# API Gateway URL
+API_GATEWAY_URL = "API_Endpoint"
 
-CHAT_COUNT_FILE = "chat_count.txt"
+# Helper function to get user's unique ID (stored in cookies)
+def get_user_id():
+    if "user_id" in st.session_state:
+        return st.session_state.user_id
 
-# Function to load chat count and last reset time
+    # Generate a unique ID based on browser fingerprint and store in cookies
+    user_fingerprint = st.experimental_user["browser"]["user_agent"] + str(time.time())
+    hashed_id = hashlib.sha256(user_fingerprint.encode()).hexdigest()
+
+    # Store user_id in session and a persistent cookie
+    st.session_state.user_id = hashed_id
+    st.experimental_set_query_params(user_id=hashed_id)  # Store in URL to persist
+    return hashed_id
+
+# Function to get current chat count from cookies
 def load_chat_count():
-    if not os.path.exists(CHAT_COUNT_FILE):
-        return 0, time.time()  # Start fresh
+    user_id = get_user_id()
+    current_time = time.time()
+    
+    # Retrieve stored chat data
+    if f"chat_count_{user_id}" in st.session_state:
+        chat_data = st.session_state[f"chat_count_{user_id}"]
+    else:
+        chat_data = st.experimental_get_query_params().get("chat_data", [{}])[0]
 
-    with open(CHAT_COUNT_FILE, "r") as file:
-        data = file.read().split()
-        if len(data) == 2:
-            count, last_reset = int(data[0]), float(data[1])
-        else:
-            count, last_reset = 0, time.time()  # Fallback case
+    # Convert to dictionary if it exists
+    if isinstance(chat_data, str):
+        chat_data = eval(chat_data)  # Convert string to dictionary
 
-    # Reset after 1 hour (3600 seconds)
-    if time.time() - last_reset > 3600:  
-        return 0, time.time()  # Reset chat count
+    # Check if reset is needed
+    last_reset = chat_data.get("last_reset", 0)
+    if current_time - last_reset > 3600:  # 1 hour limit
+        chat_data = {"count": 0, "last_reset": current_time}
 
-    return count, last_reset
+    # Store chat count persistently
+    st.session_state[f"chat_count_{user_id}"] = chat_data
+    st.experimental_set_query_params(chat_data=str(chat_data))  # Store in URL
+    return chat_data
 
-# Function to save chat count and last reset time
-def save_chat_count(count, last_reset):
-    with open(CHAT_COUNT_FILE, "w") as file:
-        file.write(f"{count} {last_reset}")
+# Function to update and save chat count
+def save_chat_count():
+    user_id = get_user_id()
+    chat_data = load_chat_count()
+    chat_data["count"] += 1  # Increment count
 
-# Load chat count and timestamp
-chat_count, last_reset_time = load_chat_count()
+    # Save updated data
+    st.session_state[f"chat_count_{user_id}"] = chat_data
+    st.experimental_set_query_params(chat_data=str(chat_data))  # Persist in URL
+
+# Load user chat count
+user_data = load_chat_count()
+chat_count = user_data["count"]
 
 # Function to get chatbot response
 def get_chatbot_response(user_input):
-    global chat_count, last_reset_time  
+    global chat_count  
 
-    if chat_count >= 10:  # Limit is 10 queries per day
-        return "⚠️ You have reached the limit of 10 queries. Please wait before asking more."
+    if chat_count >= 10:  # Enforce limit of 10 queries per user
+        return "⚠ You have reached the limit of 10 queries. Please wait before asking more."
 
     try:
         response = requests.post(API_GATEWAY_URL, json={"query": user_input})
@@ -48,22 +76,21 @@ def get_chatbot_response(user_input):
             if 'claude' in chatbot_response.lower():
                 chatbot_response = 'I am SM-VITA chatbot, a virtual assistant designed to provide information about SM VITA, CDAC programs, courses, admissions, and campus-related queries.'
 
-            # Increment and save chat count
-            chat_count += 1
-            save_chat_count(chat_count, last_reset_time)  # Persist count across refresh
+            # Update chat count
+            save_chat_count()
             return chatbot_response
         else:
-            return "⚠️ Error: Unable to reach chatbot API"
+            return "⚠ Error: Unable to reach chatbot API"
     except Exception as e:
-        return f"⚠️ Error: {e}"
+        return f"⚠ Error: {e}"
 
 # Load Local image with error handling
-logo_path = os.path.join(os.path.dirname(__file__), "VITA_logo.png")
+logo_path = os.path.join(os.path.dirname(_file_), "VITA_logo.png")
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as img_file:
         logo_base64 = base64.b64encode(img_file.read()).decode()
 else:
-    st.warning("⚠️ Warning: Logo file `VITA_logo.png` not found! Upload it in the same directory.")
+    st.warning("⚠ Warning: Logo file VITA_logo.png not found! Upload it in the same directory.")
     logo_base64 = ""
 
 # Config Streamlit page 
@@ -79,7 +106,7 @@ if "chat_sessions" not in st.session_state:
 if "current_session" not in st.session_state:
     st.session_state.current_session = 0
 if "show_suggestions" not in st.session_state:
-    st.session_state.show_suggestions = True  # Only show suggestions at start
+    st.session_state.show_suggestions = True  # Show only at start
 
 # Get the selected chat session
 chat_session = st.session_state.chat_sessions[st.session_state.current_session]
@@ -119,7 +146,7 @@ if st.session_state.show_suggestions and not chat_session:
         with cols[idx % num_columns]:  # Distribute buttons evenly across columns
             if st.button(question, key=f"q{idx}"):
                 st.session_state["user_input"] = question
-                st.session_state.show_suggestions = False  # Hide suggestions after first interaction
+                st.session_state.show_suggestions = False  # Hide after interaction
                 st.rerun()
 
 # Check if the limit is reached
