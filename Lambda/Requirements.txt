@@ -1,0 +1,12 @@
+import json
+import boto3
+import uuid
+import os
+
+Imports required libraries:
+
+json → Handles JSON data for requests and responses  
+boto3 → Connects and interacts with AWS services  
+uuid → Generates unique identifiers for requests or session tracking  
+os → Handles file operations and environment variables  
+
