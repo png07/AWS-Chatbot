@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 import os
 
-# Set page configuration **as the very first Streamlit command**
+# Set page configuration 
 st.set_page_config(
     page_title="SM VITA BOT",
     page_icon="\U0001F3E2",
