@@ -41,9 +41,9 @@ def login():
 
 def logout():
     st.session_state.authenticated = False
-    st.session_state.logout_clicked = False
     st.session_state.current_user = None
-    st.rerun()
+    st.session_state.chat_sessions = {}  # Clear chat sessions
+    st.session_state.show_suggestions = True  # Reset suggestions
 
 if not st.session_state.authenticated:
     login()
