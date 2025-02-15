@@ -9,7 +9,6 @@ We aim to develop an intelligent chatbot powered by **AWS services** to provide 
 - CDAC's **programs**
 - **Eligibility criteria**
 - **Application process**
-- **Key dates**
 
 The knowledge base is built using publicly available resources, including data from **official websites and other relevant sources**. To enhance performance, we gathered a sample set of **expected user questions** to ensure the chatbot is trained effectively.
 
@@ -38,8 +37,8 @@ The knowledge base is built using publicly available resources, including data f
 - Finalized **Titan Text Embedding Model** for the knowledge base.
 
 ### **2. Data Collection & Preprocessing**
-- Gathered publicly available **CDAC-related information**.
-- Converted data into **structured formats (PDFs, Word docs)**.
+- Gathered publicly available **SM VITA and CDAC related information**.
+- Converted data into **structured format (PDFs)**.
 - Stored data in **Amazon S3** for easy retrieval.
 - Chunked data for **efficient embedding** and vector storage.
 
@@ -68,7 +67,7 @@ The knowledge base is built using publicly available resources, including data f
 - Provided documentation and a user guide for **future enhancements**.
 
 ## **Technology Stack**
- <br>**Frontend** - Streamlit 
+  <br>**Frontend** - Streamlit 
   <br>**Backend** - AWS Lambda, API Gateway 
   <br>**AI Model** - Claude 3 Haiku (AWS Bedrock) 
   <br>**Embedding Engine** - Titan Text Embedding Model
@@ -76,20 +75,8 @@ The knowledge base is built using publicly available resources, including data f
   <br>**Storage** - Amazon S3
   <br>**Cloud Services** - AWS Bedrock, Lambda, API Gateway
 
-## Future Enhancements
-- **Multi-language support** for a wider audience.
-- **Voice-based interaction** for accessibility.
-- **Enhanced analytics** to improve chatbot efficiency.
-- **Integration with CDAC’s official database** for real-time updates.
-
 ## Conclusion
-This chatbot is designed to **enhance user experience** by providing **instant, context-aware responses** to queries about **CDAC and its courses**. By leveraging AWS services and a structured knowledge base, we ensure that the chatbot remains **accurate, efficient, and scalable**.
+This chatbot is designed to **enhance user experience** by providing **instant, context-aware responses** to queries about **SM VITA and its courses**. By leveraging AWS services and a structured knowledge base, we ensure that the chatbot remains **accurate, efficient, and scalable**.
 
 This project showcases **the power of AI and cloud computing** in delivering **intelligent automation** for educational institutions.
-
-## Contributors
-- **Project Lead:** Pooja Nayak
-- **Backend & AWS Integration:** Team Members
-- **Frontend Development:** Team Members
-- **Testing & Optimization:** Team Members
 
