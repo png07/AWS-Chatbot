@@ -5,7 +5,7 @@ import os
 
 # Set page configuration **as the very first Streamlit command**
 st.set_page_config(
-    page_title="SM VITA",
+    page_title="SM VITA BOT",
     page_icon="\U0001F3E2",
     layout="wide"
 )
@@ -27,7 +27,7 @@ if "current_user" not in st.session_state:
     st.session_state.current_user = None
 
 def login():
-    st.title("SM VITA Chatbot Login")
+    st.title("SM VITA Bot Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
