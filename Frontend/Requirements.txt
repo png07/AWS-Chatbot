@@ -2,11 +2,9 @@ import base64
 import streamlit as st
 import requests
 import os
-import time
 
 Imports required libraries:
 streamlit → Creates the web-based chatbot UI.
 requests → Sends API requests to fetch chatbot responses.
 base64 → Converts and embeds the logo as a base64 image for display
-os → Handles file operations (checking, reading, writing chat count file).
-time → Tracks time for resetting chat count and managing query limits.
+os → Handles file operations (checking, reading).

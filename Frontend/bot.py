@@ -1,55 +1,64 @@
 import base64
 import streamlit as st
 import requests
-import time
 import os
 
+# Set page configuration 
+st.set_page_config(
+    page_title="SM VITA BOT",
+    page_icon="\U0001F3E2",
+    layout="wide"
+)
+
 API_GATEWAY_URL = "https://79mo988gpl.execute-api.us-east-1.amazonaws.com/dev/chatbot"
-CHAT_COUNT_FILE = "chat_count.txt"
 
-# Function to load chat count and last reset time
-def load_chat_count():
-    if not os.path.exists(CHAT_COUNT_FILE):
-        return 0, time.time()  # Start fresh
+# Authentication
+USERS = {
+    "admin": "password123",
+    "user1": "user1pass",
+    "user2": "user2pass"
+}
 
-    with open(CHAT_COUNT_FILE, "r") as file:
-        data = file.read().split()
-        if len(data) == 2:
-            count, last_reset = int(data[0]), float(data[1])
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "logout_clicked" not in st.session_state:
+    st.session_state.logout_clicked = False
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None
+
+def login():
+    st.title("SM VITA Bot Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if username in USERS and USERS[username] == password:
+            st.session_state.authenticated = True
+            st.session_state.current_user = username
+            st.session_state.logout_clicked = False
+            st.rerun()
         else:
-            count, last_reset = 0, time.time()  # Fallback case
+            st.error("Invalid username or password")
 
-    # Reset after 24 hours (86400 seconds)
-    if time.time() - last_reset > 60:  # Changed from 30 to 86400 seconds
-        return 0, time.time()  # Reset chat count
+def logout():
+    st.session_state.authenticated = False
+    st.session_state.current_user = None
+    st.session_state.chat_sessions = {}  # Clear chat sessions
+    st.session_state.show_suggestions = True  # Reset suggestions
 
-    return count, last_reset
+if not st.session_state.authenticated:
+    login()
+    st.stop()
 
-# Function to save chat count and last reset time
-def save_chat_count(count, last_reset):
-    with open(CHAT_COUNT_FILE, "w") as file:
-        file.write(f"{count} {last_reset}")
-
-# Load chat count and timestamp
-chat_count, last_reset_time = load_chat_count()
+st.sidebar.button("Logout", on_click=logout)
 
 # Function to get chatbot response
 def get_chatbot_response(user_input):
-    global chat_count, last_reset_time  # Ensure correct scope handling
-
-    if chat_count >= 2:  # Limit is 10 queries per day
-        return "⚠️ You have reached the limit of 10 queries. Please wait before asking more."
-
     try:
         response = requests.post(API_GATEWAY_URL, json={"query": user_input})
         if response.status_code == 200:
             chatbot_response = response.json().get("response", "Error: No response from API")
             if 'claude' in chatbot_response.lower():
                 chatbot_response = 'I am SM-VITA chatbot, a virtual assistant designed to provide information about SM VITA, CDAC programs, courses, admissions, and campus-related queries.'
-
-            # Increment and save chat count
-            chat_count += 1
-            save_chat_count(chat_count, last_reset_time)  # Persist count across refresh
             return chatbot_response
         else:
             return "⚠️ Error: Unable to reach chatbot API"
@@ -65,23 +74,16 @@ else:
     st.warning("⚠️ Warning: Logo file `VITA_logo.png` not found! Upload it in the same directory.")
     logo_base64 = ""
 
-# Config Streamlit page with fallback for missing logo
-st.set_page_config(
-    page_title="SM VITA",
-    page_icon="🏢",
-    layout="wide"
-)
-
-# Initialize session state for chat history
+# Initialize session state for each user
 if "chat_sessions" not in st.session_state:
-    st.session_state.chat_sessions = [[]]
-if "current_session" not in st.session_state:
-    st.session_state.current_session = 0
+    st.session_state.chat_sessions = {}
+if st.session_state.current_user not in st.session_state.chat_sessions:
+    st.session_state.chat_sessions[st.session_state.current_user] = []
 if "show_suggestions" not in st.session_state:
     st.session_state.show_suggestions = True  # Only show suggestions at start
 
 # Get the selected chat session
-chat_session = st.session_state.chat_sessions[st.session_state.current_session]
+chat_session = st.session_state.chat_sessions[st.session_state.current_user]
 
 # Display chat history
 st.markdown(
@@ -104,46 +106,33 @@ if st.session_state.show_suggestions and not chat_session:
 
     suggested_questions = [
         "📚 What are the courses offered by SMVITA?",
-        "📚 What are the exam dates for C-Cat?",
-        "📅 What is the fee for Pre-Cat in SMVITA?",
+        "📖 What are the exam dates for C-Cat?",
+        "📅 What is the fees for Pre-Cat in SMVITA?",
         "🎓 What are the eligibility criteria for doing CDAC?",
         "📍 Where is SMVITA located?",
         "📝 How can I register for C-CAT?"
     ]
-
+    
     num_columns = min(len(suggested_questions), 3)  # Adjust number of columns as needed
     cols = st.columns(num_columns)  # Create dynamic columns
 
     for idx, question in enumerate(suggested_questions):
         with cols[idx % num_columns]:  # Distribute buttons evenly across columns
             if st.button(question, key=f"q{idx}"):
-                st.session_state["user_input"] = question
+                chat_session.append({"role": "user", "content": question})
+                response = get_chatbot_response(question)
+                chat_session.append({"role": "assistant", "content": response})
                 st.session_state.show_suggestions = False  # Hide suggestions after first interaction
                 st.rerun()
 
-# Check if the limit is reached
-if chat_count >= 2:
-    st.warning("🚨 Chat limit reached (10 queries). Please try again later.")
-else:
-    # User input
-    user_query = st.chat_input("💬 Ask me about VITA courses, admission, and more...")
-    if "user_input" in st.session_state:
-        user_query = st.session_state["user_input"]
-        del st.session_state["user_input"]
-
-    if user_query:
-        # Hide suggestions after first user query
-        st.session_state.show_suggestions = False
-
-        # Store user query
-        chat_session.append({"role": "user", "content": user_query})
-
-        # Get chatbot response
-        response = get_chatbot_response(user_query)
-        chat_session.append({"role": "assistant", "content": response})
-
-        # Display messages
-        with st.chat_message("user"):
-            st.markdown(user_query)
-        with st.chat_message("assistant"):
-            st.markdown(response)
+# Chat input field
+user_query = st.chat_input("💬 Ask me about VITA courses, admission, and more...")
+if user_query:
+    st.session_state.show_suggestions = False
+    chat_session.append({"role": "user", "content": user_query})
+    response = get_chatbot_response(user_query)
+    chat_session.append({"role": "assistant", "content": response})
+    with st.chat_message("user"):
+        st.markdown(user_query)
+    with st.chat_message("assistant"):
+        st.markdown(response)
