@@ -7,4 +7,4 @@ Imports required libraries:
 streamlit → Creates the web-based chatbot UI.
 requests → Sends API requests to fetch chatbot responses.
 base64 → Converts and embeds the logo as a base64 image for display
-os → Handles file operations (checking, reading, writing chat count file).
+os → Handles file operations (checking, reading).
