@@ -68,13 +68,13 @@ The knowledge base is built using publicly available resources, including data f
 - Provided documentation and a user guide for **future enhancements**.
 
 ## **Technology Stack**
- **Frontend** - Streamlit 
- **Backend** - AWS Lambda, API Gateway 
- **AI Model** - Claude 3 Haiku (AWS Bedrock) 
- **Embedding Engine** - Titan Text Embedding Model
- **Vector Database** - Pinecone
- **Storage** - Amazon S3
- **Cloud Services** - AWS Bedrock, Lambda, API Gateway
+ <br>**Frontend** - Streamlit 
+  <br>**Backend** - AWS Lambda, API Gateway 
+  <br>**AI Model** - Claude 3 Haiku (AWS Bedrock) 
+  <br>**Embedding Engine** - Titan Text Embedding Model
+  <br>**Vector Database** - Pinecone
+  <br>**Storage** - Amazon S3
+  <br>**Cloud Services** - AWS Bedrock, Lambda, API Gateway
 
 ## Future Enhancements
 - **Multi-language support** for a wider audience.
