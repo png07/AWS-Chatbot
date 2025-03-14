@@ -6,8 +6,8 @@ import uuid
 bedrock_agent = boto3.client(service_name="bedrock-agent-runtime", region_name="us-east-1")
 
 # Replace with your actual Bedrock Agent & Alias IDs
-BEDROCK_AGENT_ID = "781WPOXLXW"
-BEDROCK_AGENT_ALIAS_ID = "OOBNJA6FWJ"
+BEDROCK_AGENT_ID = "<agent-id>"
+BEDROCK_AGENT_ALIAS_ID = "<agent-alias-id>"
 
 def invoke_bedrock_agent(user_query, session_id):
     """Calls Bedrock Agent and handles streaming response properly."""
